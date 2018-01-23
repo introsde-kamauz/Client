@@ -39,15 +39,15 @@ public class Requester {
 	}
 	
 	public Response post(String path, String content) {
-		return service.path(path).request().accept(mediaType).post(Entity.entity(content, "application/xml"));
+		return service.path(path).request().accept(mediaType).post(Entity.entity(content, "application/json"));
 	}
 	
 	public Response put(String path, String content) {
-		return service.path(path).request().accept(mediaType).put(Entity.entity(content, "application/xml"));
+		return service.path(path).request().accept(mediaType).put(Entity.entity(content, "application/json"));
 	}
 	
 	public Response putPerson(String path, Person person) {
-		return service.path(path).request().accept(mediaType).put(Entity.entity(person, "application/xml"));
+		return service.path(path).request().accept(mediaType).put(Entity.entity(person, "application/json"));
 	}
 	
 	public Response delete(String path) {

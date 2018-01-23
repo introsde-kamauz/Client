@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.glassfish.jersey.client.ClientConfig;
+import org.json.simple.JSONObject;
 import org.xml.sax.SAXException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -30,12 +31,14 @@ public class ClientClass {
 		Client client = ClientBuilder.newClient(clientConfig);
 		WebTarget service = client.target("http://processcentricservice.herokuapp.com");
 		
-		Requester postman2 = new Requester(service, MediaType.APPLICATION_JSON);
+		Requester sender = new Requester(service, MediaType.APPLICATION_JSON);
 		String result = "";
 		RequestedFormat printer = new RequestedFormat();
 	
 		System.out.println("adding new user");
-		Response res = postman2.post("/Giorgio Michelotti/register", MediaType.APPLICATION_JSON);
+		JSONObject j = new JSONObject();
+		j.put("name", "Michela");
+		Response res = sender.post("/user", j.toJSONString());
 		System.out.println("Response code: "+res.getStatus());
 		res.bufferEntity();
 		String r2 = res.readEntity(String.class);
@@ -43,7 +46,7 @@ public class ClientClass {
 		System.out.println("0) "+r2+"\n\n");
 		
 		System.out.println("gettin all users");
-		res = postman2.get("/users");
+		res = sender.get("/user");
 		System.out.println("Response code: "+res.getStatus());
 		res.bufferEntity();
 		List<Person> abc = res.readEntity(new GenericType<List<Person>>() {});
@@ -53,7 +56,27 @@ public class ClientClass {
 		
 		
 		System.out.println("add artist preference");
-		res = postman2.post("/2/addArtist/Iron%20Maiden", MediaType.APPLICATION_JSON);
+		//res = postman2.post("/2/addArtist/Iron%20Maiden", MediaType.APPLICATION_JSON);
+		j = new JSONObject();
+		j.put("name", "Black%20Stone%20Cherry");
+		res = sender.post("/user/1/artist", j.toJSONString());
+		System.out.println("Response code: "+res.getStatus());
+		res.bufferEntity();
+		result = res.readEntity(String.class);
+		System.out.println("2) "+result);
+		System.out.println("\n");
+		
+		j = new JSONObject();
+		j.put("name", "Avenged%20Sevenfold");
+		res = sender.post("/user/1/artist", j.toJSONString());
+		System.out.println("Response code: "+res.getStatus());
+		res.bufferEntity();
+		result = res.readEntity(String.class);
+		System.out.println("2) "+result);
+		System.out.println("\n");
+		
+		System.out.println("remove artist preference");
+		res = sender.delete("/user/1/artist/Black%20Stone%20Cherry");
 		System.out.println("Response code: "+res.getStatus());
 		res.bufferEntity();
 		result = res.readEntity(String.class);
@@ -61,28 +84,27 @@ public class ClientClass {
 		System.out.println("\n");
 		
 		System.out.println("get user artists");
-		res = postman2.get("2/getUserArtists");
+		res = sender.get("/user/1/artist");
 		System.out.println("Response code: "+res.getStatus());
 		res.bufferEntity();
-		List<Artist> arts = res.readEntity(new GenericType<List<Artist>>() {});
-		System.out.println("3) "+arts.size());
-		System.out.println("\n");
+		result = res.readEntity(String.class);
+		System.out.println("6) "+result);
 		
-		System.out.println("get recommended artists");
-		res = postman2.get("2/recommArtists");
+		System.out.println("\n\nget recommended artists");
+		res = sender.get("/user/1/artist/recom");
 		System.out.println("Response code: "+res.getStatus());
 		res.bufferEntity();
 		String artsStrig = res.readEntity(String.class);
+		List<Artist> listArt = res.readEntity(new GenericType<List<Artist>>() {});
 		System.out.println("3) "+artsStrig);
 		System.out.println("\n");
 		String stArts = res.readEntity(String.class);
-		System.out.println(stArts);
 		
 		System.out.println("get recommended events");
 		
 		List<Event> ee = new ArrayList<Event>();
 		try {
-			res = postman2.get("2/recommEvents/Rovereto");
+			res = sender.get("/user/1/event/Rovereto");
 			System.out.println("Response code: "+res.getStatus());
 			res.bufferEntity();
 			String eeString = res.readEntity(String.class);
@@ -93,9 +115,15 @@ public class ClientClass {
 		}
 		
 		// {id}/evaluateArtistRecommendation/{artistName}/{artistId}/{rate}
-		if(arts.size()>0) {
+		if(artsStrig!="[]") {
+			JSONObject param = new JSONObject();
+	
+			param.put("aid", listArt.get(0).getId());
+			param.put("artistName", listArt.get(0).getName());
+			param.put("userId", "1");
+			param.put("rate", "7");
 			System.out.println("evaluate artist recommendation");
-			res = postman2.post("2/evaluateArtistRecommendation/"+arts.get(0).getName()+"/"+arts.get(0).getId()+"/5", MediaType.APPLICATION_JSON);
+			res = sender.post("/user/1/evaluate", param.toJSONString());
 			System.out.println("Response code: "+res.getStatus());
 			res.bufferEntity();
 			result = res.readEntity(String.class);
@@ -103,7 +131,7 @@ public class ClientClass {
 			System.out.println("\n");
 			
 			System.out.println("get user evaluations");
-			res = postman2.get("1/getEvaluations");
+			res = sender.get("/user/1/evaluate");
 			System.out.println("Response code: "+res.getStatus());
 			res.bufferEntity();
 			//List<Evaluation> eval = res.readEntity(new GenericType<List<Evaluation>>() {});
@@ -113,7 +141,7 @@ public class ClientClass {
 		}
 		
 		System.out.println("get random motivational quote");
-		res = postman2.get("/getMotivation");
+		res = sender.get("/motivation");
 		System.out.println("Response code: "+res.getStatus());
 		res.bufferEntity();
 		result = res.readEntity(String.class);
@@ -121,7 +149,7 @@ public class ClientClass {
 		System.out.println("\n");
 		
 		System.out.println("get user artists");
-		res = postman2.get("1/getUserArtists");
+		res = sender.get("/user/1/artist");
 		System.out.println("Response code: "+res.getStatus());
 		res.bufferEntity();
 		result = res.readEntity(String.class);
