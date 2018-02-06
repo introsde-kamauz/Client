@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.glassfish.jersey.client.ClientConfig;
@@ -34,69 +35,83 @@ public class ClientClass {
 		Requester sender = new Requester(service, MediaType.APPLICATION_JSON);
 		String result = "";
 		RequestedFormat printer = new RequestedFormat();
-	
-		System.out.println("adding new user");
-		JSONObject j = new JSONObject();
-		j.put("name", "Michela");
-		Response res = sender.post("/user", j.toJSONString());
-		System.out.println("Response code: "+res.getStatus());
-		res.bufferEntity();
-		String r2 = res.readEntity(String.class);
 		
-		System.out.println("0) "+r2+"\n\n");
-		
-		System.out.println("gettin all users");
-		res = sender.get("/user");
-		System.out.println("Response code: "+res.getStatus());
+		Response res = sender.get("/user");
 		res.bufferEntity();
 		List<Person> abc = res.readEntity(new GenericType<List<Person>>() {});
 		
-		System.out.println("2) "+abc.size());
+		Integer sizeBefore = abc.size();
+	
+		JSONObject j = new JSONObject();
+		j.put("name", "Michela");
+		res = sender.post("/user", j.toJSONString());
+		res.bufferEntity();
+		res = sender.get("/user");
+		res.bufferEntity();
+		abc = res.readEntity(new GenericType<List<Person>>() {});
+		
+		if (abc.size() == sizeBefore+1) {
+			System.out.print("USER ADDED SUCCESSFULLY");
+		} else {
+			System.out.print("ERROR WHILE ADDING NEW USER");
+		}
+		System.out.println("Number of users: "+abc.size());
+		
 		System.out.println("\n");
 		
-		
-		System.out.println("add artist preference");
-		//res = postman2.post("/2/addArtist/Iron%20Maiden", MediaType.APPLICATION_JSON);
 		j = new JSONObject();
-		j.put("name", "Black%20Stone%20Cherry");
+		j.put("name", "Metallica");
 		res = sender.post("/user/1/artist", j.toJSONString());
-		System.out.println("Response code: "+res.getStatus());
 		res.bufferEntity();
-		result = res.readEntity(String.class);
-		System.out.println("2) "+result);
-		System.out.println("\n");
-		
 		j = new JSONObject();
-		j.put("name", "Avenged%20Sevenfold");
+		j.put("name", "Black Stone Cherry");
 		res = sender.post("/user/1/artist", j.toJSONString());
-		System.out.println("Response code: "+res.getStatus());
 		res.bufferEntity();
 		result = res.readEntity(String.class);
-		System.out.println("2) "+result);
-		System.out.println("\n");
-		
-		System.out.println("remove artist preference");
-		res = sender.delete("/user/1/artist/Black%20Stone%20Cherry");
-		System.out.println("Response code: "+res.getStatus());
+		j = new JSONObject();
+		j.put("name", "Avenged Sevenfold");
+		res = sender.post("/user/1/artist", j.toJSONString());
 		res.bufferEntity();
 		result = res.readEntity(String.class);
-		System.out.println("2) "+result);
-		System.out.println("\n");
 		
-		System.out.println("get user artists");
 		res = sender.get("/user/1/artist");
-		System.out.println("Response code: "+res.getStatus());
 		res.bufferEntity();
 		result = res.readEntity(String.class);
-		System.out.println("6) "+result);
+		if (result.indexOf("Black Stone Cherry") != -1 && result.indexOf("Avenged Sevenfold") != -1) {
+			System.out.println("PREFERENCES ADDED SUCCESSFULLY");
+		} else {
+			System.out.println("ERROR WHEN ADDING PREFERENCES");
+		}
+		System.out.println(result);
+		System.out.println();
 		
-		System.out.println("\n\nget recommended artists");
+		res = sender.delete("/user/1/artist/Black Stone Cherry");
+		res = sender.delete("/user/1/artist/Avenged Sevenfold");
+		res.bufferEntity();
+		result = res.readEntity(String.class);
+		
+		res = sender.get("/user/1/artist");
+		res.bufferEntity();
+		result = res.readEntity(String.class);
+		
+		if (result.indexOf("Black Stone Cherry") == -1 && result.indexOf("Avenged Sevenfold") == -1) {
+			System.out.println("PREFERENCES REMOVED SUCCESSFULLY");
+		} else {
+			System.out.println("ERROR WHILE REMOVING PREFERENCES");
+		}
+		
+		System.out.println(result+"\n");
+		
 		res = sender.get("/user/1/artist/recom");
-		System.out.println("Response code: "+res.getStatus());
 		res.bufferEntity();
 		String artsStrig = res.readEntity(String.class);
 		List<Artist> listArt = res.readEntity(new GenericType<List<Artist>>() {});
-		System.out.println("3) "+artsStrig);
+		if (artsStrig != "[]") {
+			System.out.println("ARTISTS RECOMMENDED SUCCESSFULLY");
+		} else {
+			System.out.println("ERROR WHILE RECOMMEND ARTISTS");
+		}
+		System.out.println(artsStrig);
 		System.out.println("\n");
 		String stArts = res.readEntity(String.class);
 		
@@ -115,202 +130,50 @@ public class ClientClass {
 		}
 		
 		// {id}/evaluateArtistRecommendation/{artistName}/{artistId}/{rate}
-		if(artsStrig!="[]") {
+		Random generator = new Random();
+		if(listArt.size()>0) {
 			JSONObject param = new JSONObject();
 	
-			param.put("aid", listArt.get(0).getId());
-			param.put("artistName", listArt.get(0).getName());
+			int random = generator.nextInt(listArt.size());
+			param.put("aid", listArt.get(random).getId());
+			param.put("artistName", listArt.get(random).getName());
 			param.put("userId", "1");
-			param.put("rate", "7");
-			System.out.println("evaluate artist recommendation");
+			param.put("rate", String.format("%s", generator.nextInt(10)));
+			
 			res = sender.post("/user/1/evaluate", param.toJSONString());
-			System.out.println("Response code: "+res.getStatus());
 			res.bufferEntity();
 			result = res.readEntity(String.class);
-			System.out.println("5) "+result);
-			System.out.println("\n");
 			
-			System.out.println("get user evaluations");
 			res = sender.get("/user/1/evaluate");
-			System.out.println("Response code: "+res.getStatus());
 			res.bufferEntity();
 			//List<Evaluation> eval = res.readEntity(new GenericType<List<Evaluation>>() {});
 			String eval = res.readEntity(String.class);
-			System.out.println("6) "+eval);
+			if (eval.indexOf(listArt.get(random).getName().replace("\"","")) != -1) {
+				System.out.println("EVALUATION ADDED SUCCESSFULLY");
+			} else {
+				System.out.println("ERROR WHILE ADDING NEW EVALUATION");
+			}
+			System.out.println(eval);
 			System.out.println("\n");
 		}
 		
-		System.out.println("get random motivational quote");
 		res = sender.get("/motivation");
-		System.out.println("Response code: "+res.getStatus());
 		res.bufferEntity();
 		result = res.readEntity(String.class);
+		if (result != "" ) {
+			System.out.println("RANDOM QUOTE GENERATED SUCCESSFULLY");
+		} else {
+			System.out.println("ERROR WHILE GENERATING THE QUOTE");
+		}
 		System.out.println("5) "+result);
 		System.out.println("\n");
 		
-		System.out.println("get user artists");
+		System.out.println("GET USER ARTISTS");
 		res = sender.get("/user/1/artist");
-		System.out.println("Response code: "+res.getStatus());
 		res.bufferEntity();
 		result = res.readEntity(String.class);
-		System.out.println("6) "+result);
+		System.out.println(result);
 		
 	}
 	
 }
-
-/*
- * package projectclient;
-
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathExpressionException;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.glassfish.jersey.client.ClientConfig;
-import org.json.simple.JSONObject;
-import org.xml.sax.SAXException;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-
-import model.*;
-import lib.*;
-
-public class ClientClass {
-	public static void main(String[] args) throws JsonProcessingException, IOException, XPathExpressionException, ParserConfigurationException, SAXException {
-		ClientConfig clientConfig = new ClientConfig();
-		Client client = ClientBuilder.newClient(clientConfig);
-		WebTarget service = client.target("http://processcentricservice.herokuapp.com");
-		
-		Requester postman2 = new Requester(service, MediaType.APPLICATION_JSON);
-		String result = "";
-		RequestedFormat printer = new RequestedFormat();
-	
-		System.out.println("adding new user");
-		Response res = postman2.post("/register", "Giorgio Michelotti");
-		System.out.println("Response code: "+res.getStatus());
-		res.bufferEntity();
-		String r2 = res.readEntity(String.class);
-		
-		System.out.println("0) "+r2+"\n\n");
-		
-		System.out.println("gettin all users");
-		res = postman2.get("/users");
-		System.out.println("Response code: "+res.getStatus());
-		res.bufferEntity();
-		List<Person> abc = res.readEntity(new GenericType<List<Person>>() {});
-		
-		System.out.println("2) "+abc.size());
-		System.out.println("\n");
-		
-		
-		System.out.println("add artist preference");
-		JSONObject param = new JSONObject();
-		param.put("id", 1);
-		param.put("name", "Iron%20Maiden");
-		
-		res = postman2.post("/addArtist", param.toJSONString());
-		System.out.println("Response code: "+res.getStatus());
-		res.bufferEntity();
-		result = res.readEntity(String.class);
-		System.out.println("2) "+result);
-		System.out.println("\n");
-		
-		param = new JSONObject();
-		param.put("id", 1);
-		param.put("name", "Metallica");
-		System.out.println("add artist preference");
-		res = postman2.post("/1/addArtist/Metallica", param.toJSONString());
-		System.out.println("Response code: "+res.getStatus());
-		res.bufferEntity();
-		result = res.readEntity(String.class);
-		System.out.println("2) "+result);
-		System.out.println("\n");
-		
-		System.out.println("get user artists");
-		res = postman2.get("1/getUserArtists");
-		System.out.println("Response code: "+res.getStatus());
-		res.bufferEntity();
-		List<Artist> arts = res.readEntity(new GenericType<List<Artist>>() {});
-		System.out.println("3) "+arts.size());
-		System.out.println("\n");
-		
-		System.out.println("get recommended artists");
-		res = postman2.get("1/recommArtists");
-		System.out.println("Response code: "+res.getStatus());
-		res.bufferEntity();
-		arts = res.readEntity(new GenericType<List<Artist>>() {});
-		System.out.println("3) "+arts.size());
-		System.out.println("\n");
-		
-		System.out.println("get recommended events");
-		
-		List<Event> ee = new ArrayList<Event>();
-		try {
-			res = postman2.get("1/recommEvents/Rovereto");
-			System.out.println("Response code: "+res.getStatus());
-			res.bufferEntity();
-			ee = res.readEntity(new GenericType<List<Event>>() {});
-			System.out.println("4) "+ee.size());
-			System.out.println("\n");
-		} catch(Exception e) {
-			System.out.println("Request takes much time to be executed, so Heroku dropped it by setting a request timeout\n\n");
-		}
-		
-		// {id}/evaluateArtistRecommendation/{artistName}/{artistId}/{rate}
-		if(arts.size()>0) {
-			System.out.println("evaluate artist recommendation");
-			param = new JSONObject();
-			Evaluation e = new Evaluation();
-			e.setArtistId(arts.get(0).getId());
-			e.setArtistName(arts.get(0).getName());
-			e.setUserId("1");
-			e.setRate(7);
-			param.put("e", e);
-			res = postman2.post("/evaluateArtistRecommendation", param.toJSONString());
-			System.out.println("Response code: "+res.getStatus());
-			res.bufferEntity();
-			result = res.readEntity(String.class);
-			System.out.println("5) "+result);
-			System.out.println("\n");
-			
-			System.out.println("get user evaluations");
-			res = postman2.get("1/getEvaluations");
-			System.out.println("Response code: "+res.getStatus());
-			res.bufferEntity();
-			//List<Evaluation> eval = res.readEntity(new GenericType<List<Evaluation>>() {});
-			String eval = res.readEntity(String.class);
-			System.out.println("6) "+eval);
-			System.out.println("\n");
-		}
-		
-		System.out.println("get random motivational quote");
-		res = postman2.get("/getMotivation");
-		System.out.println("Response code: "+res.getStatus());
-		res.bufferEntity();
-		result = res.readEntity(String.class);
-		System.out.println("5) "+result);
-		System.out.println("\n");
-		
-		System.out.println("get user artists");
-		res = postman2.get("1/getUserArtists");
-		System.out.println("Response code: "+res.getStatus());
-		res.bufferEntity();
-		result = res.readEntity(String.class);
-		System.out.println("6) "+result);
-		
-	}
-	
-}
-*/
