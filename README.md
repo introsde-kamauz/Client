@@ -50,4 +50,4 @@ GET USER ARTISTS
 ```
 
 ## Some possible issues
-Depending on the number of recommended artists and on the number of events available in the future, the requests can be slow to be processed (the computational cost should be O(nm) where n is the number of artists and m the number of events). Heroku have fixed a timeout for each request to 10-20 seconds so in some cases it is possible to get 503 errors for this reason
+Depending on the number of recommended artists and on the number of events available in the future, the event recommendations requests can be slow to be processed (the computational cost should be O(nm) where n is the number of artists and m the number of events). Heroku have fixed a timeout for each request to 10-20 seconds so in some cases it is possible to get 503 errors for this reason
